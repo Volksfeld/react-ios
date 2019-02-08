@@ -1,15 +1,19 @@
 import React, {Component} from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import styles from './styles';
+import ListItem from './components/ListItem';
 import {Linking} from 'react-native';
-import api from '../services/api';
+import api from '../../services/api';
 
 
-export default class Main extends Component{
+export default class MainPage extends Component{
+
+    
     static navigationOptions = {
         title: "Produtos legais"
     };
 
+    
     state = {
         loading: true,
         totalPages: 2,
@@ -17,15 +21,16 @@ export default class Main extends Component{
         page: 1,
     };
 
+   
     async componentDidMount(){
        await this.loadProducts();
     }
     
-    callDummyGetProducts = async (page) => {
+    // API SYNC -------------------------------------------
+    getProducts = async (page) => {
     const apiResponse = await api.get(`/products?page=${page}`);
     console.log(apiResponse);
     const {docs, pages} = apiResponse.data;
-    const dummyData = {_id: 1, title: 'titulo', description: 'descricao', url: 'https://google.com'};
 
     const successResponse = {
         ok: true,
@@ -37,6 +42,7 @@ export default class Main extends Component{
 
 }
 
+    // HANDLES --------------------------------------------
     handleError = (error) => {
         this.setState(prevState => ({
             ...prevState,
@@ -45,6 +51,7 @@ export default class Main extends Component{
             error,
           }));
     }
+   
     handleSuccess = (data) => {
         const {docs, pages, page} = data;
         this.setState(prevState => ({
@@ -58,27 +65,23 @@ export default class Main extends Component{
         
     }
 
-    
+    // LOADS (PAGE) -----------------------------------------
     loadProducts = async (page = 1) => {
-        const response = await this.callDummyGetProducts(page);// await api.get(`/products?page=${page}`);
-
+        const response = await this.getProducts(page);
+      
+    // SHOOTS handleSucces
         if (response.ok) { 
             const {data} = response;
             this.handleSuccess(data);
 
         }
-            
+    // SHOOTS handleError        
         else{ 
             const {error} = response;
             this.handleError(error);
         }
 
-       // const {docs, ...productInfo} = response.data;
-    
-       // this.setState({ docs: [...this.state.docs, ...docs], productInfo, page });
     };
-    
-
     
     loadMore = async () => {
         console.log('loadMore');
@@ -91,40 +94,34 @@ export default class Main extends Component{
         const nextPage = page + 1;
            await this.loadProducts(nextPage) 
 
-    /*
+    };
 
-    if(page == productInfo.pages) return;
-
-    const pageNumber = page + 1;
-
-    this.loadProducts(pageNumber);
-
-    */ };
-
-    onPressProduct = (item) => 
-    
+    //ON PRESS
+    onPressProduct = (item) =>     
     {   
-      
         Linking.openURL(item.url);
-    
-    //  {this.props.navigation.navigate('Product', {product: item});
 }
-
-    renderItem = ({ item }) => (
-         
-        <View style={styles.productContainer}>
-            <Text style={styles.productTitle}>{item.title}</Text>
-            <Text style={styles.productDescription}>{item.description}</Text>
-            <Text style={styles.productDescription}>{item.url}</Text>
-            <TouchableOpacity style={styles.productButton} 
-            
-            onPress={() => { this.onPressProduct(item)}}>
-
-            <Text style={styles.productButtonText}>Acessar</Text>
-            </TouchableOpacity>
-        </View>
-    );
+    //RENDER ----------------------------------------------
+    render(){
+    const {loading, error } = this.state;
+    if (loading){
+        return this.renderLoading();
+    }
+    if(error !== undefined){
+        return  this.renderError();
+    }
+    return this.renderContent();
+}
     
+    renderItem = ({item})=> {
+        
+        return (
+        <ListItem item = {item} onPressProduct = {this.onPressProduct}/>
+        );
+
+    }     
+
+  
     renderLoading = () => { 
         console.log("loading");
         return(
@@ -132,7 +129,8 @@ export default class Main extends Component{
             <Text style={styles.loadingText}>Carregando ...</Text>
         </View>
     );
-}
+}   
+    
     renderError = () => {
         console.log("error");    
         return(
@@ -143,6 +141,7 @@ export default class Main extends Component{
 
     );
 }
+    
     renderContent = () => {
         console.log("content");
        const {products} = this.state;
@@ -162,14 +161,4 @@ export default class Main extends Component{
         );
     }
 
-    render(){
-        const {loading, error } = this.state;
-        if (loading){
-            return this.renderLoading();
-        }
-        if(error !== undefined){
-            return  this.renderError();
-        }
-        return this.renderContent();
-    }
 }   

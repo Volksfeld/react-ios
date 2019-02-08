@@ -1,10 +1,10 @@
 import {createStackNavigator} from "react-navigation";
 
-import Main from "./pages/main";
+import MainPage from "./pages/MainPage/main";
 import Product from './pages/product';
 
 export default createStackNavigator({
-    Main,
+    Main: MainPage,
     Product
 },{
     navigationOptions: {
